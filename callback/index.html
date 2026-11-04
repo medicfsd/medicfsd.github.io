@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tesla authorization code</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 1.25rem;
+      font-family: system-ui, sans-serif;
+      line-height: 1.45;
+      color: #111;
+      background: #fff;
+    }
+    main {
+      max-width: 40rem;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.35rem;
+      margin: 0 0 0.75rem;
+    }
+    .code-box {
+      margin: 0.75rem 0 1rem;
+      padding: 1rem;
+      font-family: ui-monospace, monospace;
+      font-size: 1.35rem;
+      line-height: 1.4;
+      word-break: break-all;
+      white-space: pre-wrap;
+      background: #f4f4f5;
+      border: 1px solid #d4d4d8;
+      border-radius: 8px;
+    }
+    button {
+      font: inherit;
+      font-size: 1.05rem;
+      padding: 0.85rem 1.15rem;
+      min-height: 48px;
+      border: 0;
+      border-radius: 8px;
+      background: #111;
+      color: #fff;
+    }
+    #copied {
+      margin: 0.75rem 0 0;
+    }
+    .detail {
+      margin-top: 1.25rem;
+      word-break: break-all;
+    }
+    .detail p {
+      margin: 0.35rem 0;
+    }
+    .error {
+      color: #9a3412;
+    }
+    .privacy {
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Tesla authorization code</h1>
+    <p id="status"></p>
+    <div id="code" class="code-box" hidden></div>
+    <button id="copy" type="button" hidden>Copy code</button>
+    <p id="copied" hidden>Copied.</p>
+    <div id="details" class="detail"></div>
+    <p class="privacy">This page only displays the values already in the address bar. It does not send the code anywhere: there is no network request, no analytics, and no external resource.</p>
+  </main>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var code = params.get("code");
+      var state = params.get("state");
+      var error = params.get("error");
+      var errorDescription = params.get("error_description");
+      var status = document.getElementById("status");
+      var codeBox = document.getElementById("code");
+      var copyButton = document.getElementById("copy");
+      var copied = document.getElementById("copied");
+      var details = document.getElementById("details");
+
+      function addDetail(label, value, isError) {
+        if (!value) return;
+        var p = document.createElement("p");
+        if (isError) p.className = "error";
+        var labelNode = document.createElement("strong");
+        labelNode.textContent = label + ": ";
+        p.appendChild(labelNode);
+        p.appendChild(document.createTextNode(value));
+        details.appendChild(p);
+      }
+
+      function markCopied() {
+        copied.hidden = false;
+        copyButton.textContent = "Copied";
+      }
+
+      function copyWithFallback(text) {
+        var area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.top = "0";
+        area.style.left = "0";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.focus();
+        area.select();
+        var ok = false;
+        try {
+          ok = document.execCommand("copy");
+        } catch (err) {
+          ok = false;
+        }
+        document.body.removeChild(area);
+        if (ok) markCopied();
+        else status.textContent = "Select the code above and copy it manually.";
+      }
+
+      if (!code) {
+        status.textContent = "No authorization code in this link.";
+      } else {
+        status.textContent = "Copy this code on your phone, then paste it where you started sign-in.";
+        codeBox.hidden = false;
+        codeBox.textContent = code;
+        copyButton.hidden = false;
+        copyButton.addEventListener("click", function () {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(markCopied).catch(function () {
+              copyWithFallback(code);
+            });
+          } else {
+            copyWithFallback(code);
+          }
+        });
+      }
+
+      addDetail("state", state, false);
+      addDetail("error", error, true);
+      addDetail("error_description", errorDescription, true);
+    })();
+  </script>
+</body>
+</html>
